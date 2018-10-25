@@ -39,7 +39,7 @@ class ApidaeDroits {
 
 	private $debug = false ;
 
-	public function __construct($params=null) {
+	public function __construct(array $params=null) {
 		
 		if ( isset($params['projet_consultation_projectId']) && preg_match('#^[0-9]+$#',$params['projet_consultation_projectId']) )
 			$this->projet_consultation_projectId = $params['projet_consultation_projectId'] ;
@@ -72,9 +72,9 @@ class ApidaeDroits {
 	 * 
 	 * @since	1.0
 	 * 
-	 * @return	Array	Tableau associatif des membres
+	 * @return	array	Tableau associatif des membres
 	 */
-	public function getMembres($query,$responseFields=null)
+	public function getMembres(array $query,string $responseFields=null)
 	{
 		$params = Array(
 			'projectId'=>$this->projet_consultation_projectId,
@@ -96,17 +96,23 @@ class ApidaeDroits {
 	/**
 	 * Récupère la liste des filleuls selon l'idParrain
 	 * 
-	 * @params	$idParrain	int	Identifiant du membre parrain
-	 * @return	Array	Tableau associatif des membres filleuls
+	 * @param int $idParrain	int	Identifiant du membre parrain
+	 * @return array Tableau associatif des membres filleuls
 	 */
-	public function getFilleuls($idParrain)
+	public function getFilleuls(int $idParrain)
 	{
 		$query = Array('idParrain'=>$idParrain) ;
 		$responseFields = Array("UTILISATEURS") ;
 		return $this->getMembres($query,$responseFields) ;
 	}
 
-	public function getUserById($id_user)
+	/**
+     * Description of a*a
+     * @param $arg
+     * @param array $arr
+     * @param int $bool
+     */
+	public function getUserById(int $id_user)
 	{
 		if ( ! preg_match('#^[0-9]+$#',$id_user) ) throw new \Exception(__LINE__." Invalid id_user for getUserById : ".$id_user) ;
 
@@ -119,7 +125,7 @@ class ApidaeDroits {
 		return $this->apidaeCurlMU('utilisateur/get-by-id','GET',$params,$id_user) ;
 	}
 
-	public function getUserByMail($mail_user)
+	public function getUserByMail(string $mail_user)
 	{
 		if ( false === filter_var($mail_user, FILTER_VALIDATE_EMAIL) ) throw new \Exception(__LINE__." Invalid mail_user for getUserByMail : ".$mail_user) ;
 
@@ -132,7 +138,7 @@ class ApidaeDroits {
 		return $this->apidaeCurlMU('utilisateur/get-by-mail','GET',$params,$mail_user) ;
 	}
 
-	public function getUsersByMember($id_membre)
+	public function getUsersByMember(int $id_membre)
 	{
 		if ( ! preg_match('#^[0-9]+$#',$id_membre) ) throw new \Exception(__LINE__." Invalid id_membre for getUsersByMember : ".$id_membre) ;
 
@@ -148,10 +154,10 @@ class ApidaeDroits {
 	/**
 	 * Gestion des appels cURL aux API membres et utilisateurs d'Apidae
 	 * 
-	 * @param	String	$service	Service (chemin relatif)
-	 * @param	Array	$params	Liste de paramètres qui seront envoyées en cURL : en POST elles seront converties via json_encode, en GET elles seront converties via http_build_query.
+	 * @param	string	$service	Service (chemin relatif)
+	 * @param	array	$params	Liste de paramètres qui seront envoyées en cURL : en POST elles seront converties via json_encode, en GET elles seront converties via http_build_query.
 	 */
-	private function apidaeCurlMU($service,$method='POST',$params=null,$page=null)
+	private function apidaeCurlMU(string $service,string $method='POST',array $params=null,string $page=null)
 	{
 		$debug = $this->debug ;
 
