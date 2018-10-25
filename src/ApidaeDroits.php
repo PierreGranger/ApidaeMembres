@@ -1,13 +1,18 @@
 <?php
-
+/**
+ * Documentation pour le fichier ApidaeDroits.php
+ * 
+ * 
+*/
 	nameSpace PierreGranger ;
 
 /**
+ * Documentation pour la classe ApidaeDroits
+ * 
  * @author	Pierre Granger	<pierre@pierre-granger.fr>
  * 
  * 
  */
-
 class ApidaeDroits {
   
 	protected static $url_api = Array(
