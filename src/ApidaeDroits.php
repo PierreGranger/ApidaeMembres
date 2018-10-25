@@ -101,6 +101,45 @@ class ApidaeDroits {
 		return $this->getMembres($query,$responseFields) ;
 	}
 
+	public function getUserById($id_user)
+	{
+		if ( ! preg_match('#^[0-9]+$#',$id_user) ) throw new \Exception(__LINE__." Invalid id_user for getUserById : ".$id_user) ;
+
+		$params = Array(
+			//'projectId'=>$this->projet_consultation_projectId,
+			'projetId'=>$this->projet_consultation_projectId,
+			'apiKey'=>$this->projet_consultation_apiKey
+		) ;
+
+		return $this->apidaeCurlMU('utilisateur/get-by-id','GET',$params,$id_user) ;
+	}
+
+	public function getUserByMail($mail_user)
+	{
+		if ( false === filter_var($mail_user, FILTER_VALIDATE_EMAIL) ) throw new \Exception(__LINE__." Invalid mail_user for getUserByMail : ".$mail_user) ;
+
+		$params = Array(
+			//'projectId'=>$this->projet_consultation_projectId,
+			'projetId'=>$this->projet_consultation_projectId,
+			'apiKey'=>$this->projet_consultation_apiKey
+		) ;
+
+		return $this->apidaeCurlMU('utilisateur/get-by-mail','GET',$params,$mail_user) ;
+	}
+
+	public function getUsersByMember($id_membre)
+	{
+		if ( ! preg_match('#^[0-9]+$#',$id_membre) ) throw new \Exception(__LINE__." Invalid id_membre for getUsersByMember : ".$id_membre) ;
+
+		$params = Array(
+			//'projectId'=>$this->projet_consultation_projectId,
+			'projetId'=>$this->projet_consultation_projectId,
+			'apiKey'=>$this->projet_consultation_apiKey
+		) ;
+
+		return $this->apidaeCurlMU('utilisateur/get-by-membre','GET',$params,$id_membre) ;
+	}
+
 	/**
 	 * Gestion des appels cURL aux API membres et utilisateurs d'Apidae
 	 * 
@@ -125,7 +164,8 @@ class ApidaeDroits {
 			
 			$url_base = $this->url_api().'api/v002/'.$service.'/' ;
 			$url = $url_base ;
-			if ( $page != null && preg_match('#^[a-zA-Z0-9@\.]$#',$page) ) $url .= $page ;
+			if ( $page !== null && preg_match('#^[a-zA-Z0-9\@\.-]+$#',$page) ) $url .= $page ;
+			else echo $page ;
 			
 			if ( $method == 'GET' ) $url .= '?'.http_build_query($params) ;
 			curl_setopt($ch,CURLOPT_URL, $url) ;
@@ -144,8 +184,13 @@ class ApidaeDroits {
 			if ( $debug )
 			{
 				echo '<pre style="background:black;color:white;">' ;
-					echo $url_base."\n" ;
-					echo json_encode($params) ;
+					if ( $method =='POST' )
+					{
+						echo $url_base."\n" ;
+						echo json_encode($params) ;
+					}
+					else
+						echo $url ;
 				echo '</pre>' ;
 			}
 
@@ -158,7 +203,7 @@ class ApidaeDroits {
 			if ( $httpcode != 200 ) 
 			{
 				if ( $this->debug )
-					throw new \Exception($url_base."\n".json_encode($params)."\n".$header."\n".$body, $httpcode);
+					throw new \Exception($url_base."\n".json_encode($params)."\n".$body, $httpcode);
 				else
 					throw new \Exception($url_base, $httpcode);
 			}
@@ -169,7 +214,7 @@ class ApidaeDroits {
 			if ( $json_last_error !== JSON_ERROR_NONE )
 			{
 				if ( $this->debug )
-					throw new \Exception('cURL Return is not JSON ['.$json_last_error.'] : '.$url_base."\n".json_encode($params)."\n".$header."\n".$body);
+					throw new \Exception('cURL Return is not JSON ['.$json_last_error.'] : '.$url_base."\n".json_encode($params)."\n".$body);
 				else
 					throw new \Exception('cURL Return is not JSON');
 			}
