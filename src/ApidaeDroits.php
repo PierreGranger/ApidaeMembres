@@ -59,11 +59,11 @@ class ApidaeDroits {
 
 	}
 
-	public function url_base() {
+	private function url_base() {
 		return self::$url_base[$this->type_prod] ;
 	}
 
-	public function url_api() {
+	private function url_api() {
 		return self::$url_api[$this->type_prod] ;
 	}
 
@@ -151,7 +151,7 @@ class ApidaeDroits {
 	 * @param	String	$service	Service (chemin relatif)
 	 * @param	Array	$params	Liste de paramètres qui seront envoyées en cURL : en POST elles seront converties via json_encode, en GET elles seront converties via http_build_query.
 	 */
-	protected function apidaeCurlMU($service,$method='POST',$params=null,$page=null)
+	private function apidaeCurlMU($service,$method='POST',$params=null,$page=null)
 	{
 		$debug = $this->debug ;
 

@@ -8,5 +8,8 @@
         "psr-4": {
             "PierreGranger\\": "src/"
         }
+    },
+    "require-dev": {
+        "victorjonsson/markdowndocs": "^1.3"
     }
 }
