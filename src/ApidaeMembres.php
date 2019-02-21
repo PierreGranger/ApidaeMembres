@@ -30,14 +30,19 @@ class ApidaeMembres {
 	protected $projet_consultation_projetId = null ;
 	protected $projet_consultation_apiKey = null ;
 
+	public static $idCRT = Array(1,1157) ; // Identifiants des membres Auvergne - Rhône-Alpes Tourisme et Apidae Tourisme
+
 	private $servicesMU = Array(
-		'membre/get-by-id','membre/get-membres', // POST
-		'membre/get-by-id','utilisateur/get-by-id','utilisateur/get-by-mail','utilisateur/get-by-membre','utilisateur/get-all-utilisateurs'
+		'GET' => Array('utilisateur/get-by-id','utilisateur/get-by-mail','utilisateur/get-by-membre','utilisateur/get-all-utilisateurs','membre/get-by-id'),
+		'POST' => Array('membre/get-membres')
 	) ;
 
 	protected $_config ;
 
 	private $debug = false ;
+
+	private $curlConnectTimeout = 120 ;
+	private $curlTimeout = 120 ;
 
 	public function __construct(array $params=null) {
 		
@@ -74,19 +79,17 @@ class ApidaeMembres {
 	 * 
 	 * @return	array	Tableau associatif des membres
 	 */
-	public function getMembres(array $query,array $responseFields=null)
+	public function getMembres(array $filter,array $responseFields=null)
 	{
-		$params = Array(
+		$query = Array(
 			'projetId'=>$this->projet_consultation_projetId,
-			'apiKey'=>$this->projet_consultation_apiKey
+			'apiKey'=>$this->projet_consultation_apiKey,
+			'filter'=>$filter
 		) ;
 		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
-			$params['responseFields'] = $responseFields ;
+			$query['responseFields'] = $responseFields ;
 
-		return $this->apidaeCurlMU('membre/get-membres','POST',Array(
-			'params' => $params,
-			'query' => $query
-		)) ;
+		return $this->apidaeCurlMU('membre/get-membres',$query) ;
 	}
 
 	/**
@@ -97,12 +100,13 @@ class ApidaeMembres {
 	 */
 	public function getFilleuls(int $idParrain,array $types=null)
 	{
+		
+		$filter = Array('idParrain'=>$idParrain) ;
 		if ( $types == null || ! is_array($types) ) $types = Array('Contributeur Généraliste') ;
-		$query = Array('idParrain'=>$idParrain,'types'=>$types) ;
+		if ( is_array($types) && sizeof($types) > 0 ) $filter['types'] = $types ;
 		$responseFields = Array("UTILISATEURS") ;
-		return $this->getMembres($query,$responseFields) ;
+		return $this->getMembres($filter,$responseFields) ;
 	}
-
 	/**
      * Récupération d'un utilisateur par son identifiant, via le service get-by-id de l'API Membres/utilisateurs d'Apidae
      * @param int	$id_user
@@ -112,16 +116,21 @@ class ApidaeMembres {
 	{
 		if ( ! preg_match('#^[0-9]+$#',$id_user) ) throw new \Exception(__LINE__." Invalid id_user for getUserById : ".$id_user) ;
 
-		$params = Array(
+		$query = Array(
 			//'projetId'=>$this->projet_consultation_projetId,
 			'projetId'=>$this->projet_consultation_projetId,
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 
-		return $this->apidaeCurlMU('utilisateur/get-by-id','GET',$params,$id_user) ;
+		return $this->apidaeCurlMU('utilisateur/get-by-id',$query,$id_user) ;
 	}
-	public function getUser(int $id_user) { return $this->getUserById($id_user) ; }
-	public function getUtilisateur(int $id_user) { return $this->getUserById($id_user) ; }
+	public function getUtilisateur($var) { return $this->getUser($var) ; }
+
+	public function getUser($var) {
+		if ( is_int($var) ) return $this->getUserById($var) ;
+		elseif ( ( strpos($var,'@') ) !== false ) return $this->getUserByMail($var) ;
+		return false ;
+	}
 
 	/**
      * Récupération d'un utilisateur par son adresse mail, via le service get-by-mail de l'API Membres/utilisateurs d'Apidae
@@ -138,7 +147,7 @@ class ApidaeMembres {
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 
-		return $this->apidaeCurlMU('utilisateur/get-by-mail','GET',$params,$mail_user) ;
+		return $this->apidaeCurlMU('utilisateur/get-by-mail',$params,$mail_user) ;
 	}
 
 	/**
@@ -156,7 +165,7 @@ class ApidaeMembres {
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 
-		return $this->apidaeCurlMU('utilisateur/get-by-membre','GET',$params,$id_membre) ;
+		return $this->apidaeCurlMU('utilisateur/get-by-membre',$params,$id_membre) ;
 	}
 
 	/**
@@ -168,15 +177,14 @@ class ApidaeMembres {
 	{
 		if ( ! preg_match('#^[0-9]+$#',$id_membre) ) throw new \Exception(__LINE__.' Invalid id_membre for '.__FUNCTION__.' : '.$id_membre) ;
 
-		$params = Array(
+		$query = Array(
 			'projetId'=>$this->projet_consultation_projetId,
-			'apiKey'=>$this->projet_consultation_apiKey,
-			'id'=>$id_membre
+			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
-			$params['responseFields'] = $responseFields ;
+			$query['responseFields'] = $responseFields ;
 
-		return $this->apidaeCurlMU('membre/get-by-id','POST',$params) ;
+		return $this->apidaeCurlMU('membre/get-by-id',$query,$id_membre) ;
 	}
 
 	/**
@@ -185,27 +193,27 @@ class ApidaeMembres {
 	 * @param	string	$service	Service (chemin relatif)
 	 * @param	array	$params	Liste de paramètres qui seront envoyées en cURL : en POST elles seront converties via json_encode, en GET elles seront converties via http_build_query.
 	 */
-	private function apidaeCurlMU(string $service,string $method='POST',array $params=null,string $page=null)
+	private function apidaeCurlMU(string $service,array $params=null,string $page=null)
 	{
 		$debug = $this->debug ;
 
-		if ( ! in_array($method,Array('GET','POST')) )
-			throw new \Exception(__LINE__." Invalid method for apidaeCurl : ".$method) ;
-		if ( ! in_array($service,$this->servicesMU) )
-			throw new \Exception(__LINE__." Invalid function for apidaeCurl : ".$service) ;
+		$method = null ;
+		if ( in_array($service,$this->servicesMU['GET']) ) $method = 'GET' ;
+		elseif ( in_array($service,$this->servicesMU['POST']) ) $method = 'POST' ;
+		else throw new \Exception(__LINE__." Invalid function for apidaeCurl : ".$service) ;
 		
 		//try {
 			$ch = curl_init();
 			
-			echo __LINE__ ;
-			curl_setopt($ch, CURLOPT_HTTPHEADER, Array('Content-Type: application/json')); // Erreur 415 sans cette ligne
+			//curl_setopt($ch, CURLOPT_HTTPHEADER, Array('Content-Type: application/json')); // Erreur 415 sans cette ligne
+			//curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain')); 
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 			//curl_setopt($ch, CURLOPT_HEADER, 1) ;
 			
+
 			$url_base = $this->url_api().'api/v002/'.$service.'/' ;
 			$url = $url_base ;
 			if ( $page !== null && preg_match('#^[a-zA-Z0-9\@\.-]+$#',$page) ) $url .= $page ;
-			else echo $page ;
 			
 			if ( $method == 'GET' ) $url .= '?'.http_build_query($params) ;
 			curl_setopt($ch,CURLOPT_URL, $url) ;
@@ -213,29 +221,31 @@ class ApidaeMembres {
 			if ( $method == 'POST' )
 			{
 				curl_setopt($ch, CURLOPT_POST, 1) ;
-				$postfields = json_encode($params) ;
+				$postfields = 'query='.json_encode($params) ;
 				curl_setopt($ch,CURLOPT_POSTFIELDS, $postfields);
 			}
 			
-			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); 
-			curl_setopt($ch, CURLOPT_TIMEOUT, 5); //timeout in seconds
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->curlConnectTimeout); 
+			curl_setopt($ch, CURLOPT_TIMEOUT, $this->curlTimeout); //timeout in seconds
 
-			$response = curl_exec($ch);
-			$info = curl_getinfo($ch);
-			$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-	
 			if ( $debug )
 			{
 				echo '<pre style="background:black;color:white;">' ;
+					echo $method . PHP_EOL ; 
 					if ( $method =='POST' )
 					{
-						echo $url_base."\n" ;
-						echo json_encode($params) ;
+						echo $url.PHP_EOL ;
+						echo $postfields ;
 					}
 					else
 						echo $url ;
 				echo '</pre>' ;
 			}
+
+			$response = curl_exec($ch);
+			$info = curl_getinfo($ch);
+			$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	
 
 			if (FALSE === $response) throw new \Exception(curl_error($ch), curl_errno($ch));
 
@@ -245,10 +255,12 @@ class ApidaeMembres {
 
 			if ( $httpcode != 200 ) 
 			{
+				echo '<pre>' ;
 				if ( $this->debug )
-					throw new \Exception($url_base."\n".json_encode($params)."\n".$body, $httpcode);
+					throw new \Exception($url_base.PHP_EOL.json_encode($params).PHP_EOL.$body, $httpcode);
 				else
-					throw new \Exception($url_base, $httpcode);
+					throw new \Exception($url_base, $httpcode); // On affichage l'url_base et non $url parce qu'il peut contenir l'apiKey et projetId
+				echo '</pre>' ;
 			}
 			
 			$ret = json_decode($body,true) ;
@@ -257,7 +269,7 @@ class ApidaeMembres {
 			if ( $json_last_error !== JSON_ERROR_NONE )
 			{
 				if ( $this->debug )
-					throw new \Exception('cURL Return is not JSON ['.$json_last_error.'] : '.$url_base."\n".json_encode($params)."\n".$body);
+					throw new \Exception('cURL Return is not JSON ['.$json_last_error.'] : '.$url_base.PHP_EOL.json_encode($params).PHP_EOL.$body);
 				else
 					throw new \Exception('cURL Return is not JSON');
 			}

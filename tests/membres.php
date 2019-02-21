@@ -1,14 +1,10 @@
 <?php
 
-	include(realpath(dirname(__FILE__)).'/../vendor/autoload.php') ;
-	include(realpath(dirname(__FILE__)).'/../config.inc.php') ;
-
-    ini_set('display_errors',1) ;
-    error_reporting(E_ALL) ;
-
-    $configApidaeMembres['type_prod'] = 'preprod' ;
-    $configApidaeMembres['debug'] = true ;
-    $ad = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
+    require(realpath(dirname(__FILE__)).'/../vendor/autoload.php') ;
+    require(realpath(dirname(__FILE__)).'/../config.inc.php') ;
+    require(realpath(dirname(__FILE__)).'/runtimes.inc.php') ;
+    
+    $ApidaeMembres = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
     
     $id_membre = 1147 ;
 
@@ -18,16 +14,18 @@
     
     echo '<h1>tests getMembre</h1>' ;
 
+    ruStart(__FILE__) ;
     try {
     
         echo '<h2>getMembreById('.$id_membre.')</h2>'.PHP_EOL ;
-        $membreById = $ad->getmembreById($id_membre,Array('PROJETS')) ;
+        $membreById = $ApidaeMembres->getMembreById($id_membre,Array('PROJETS')) ;
         echo '<pre data-type="json">'.json_encode($membreById).'</pre>'.PHP_EOL ;
     }
     catch ( Exception $e ) {
         print_r($e) ;
         die() ;
     }
+    ruShow(__FILE__) ;
 
 ?><script>jQuery('pre[data-type="json"]').beautifyJSON();</script>
     

@@ -1,55 +1,59 @@
 <?php
 
-	include(realpath(dirname(__FILE__)).'/../vendor/autoload.php') ;
-	include(realpath(dirname(__FILE__)).'/../config.inc.php') ;
+    require(realpath(dirname(__FILE__)).'/../vendor/autoload.php') ;
+    require(realpath(dirname(__FILE__)).'/../config.inc.php') ;
+    require(realpath(dirname(__FILE__)).'/runtimes.inc.php') ;
 
-    ini_set('display_errors',1) ;
-    error_reporting(E_ALL) ;
+    $ApidaeMembres = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
 
-	if (php_sapi_name() !== "cli") echo '<pre>' ;
+    $projet_recherche = 2792 ; // ApidaeEvent (multi-membres)
 
-    $configApidaeMembres['type_prod'] = 'preprod' ;
-    $ad = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
-    
+    ruStart('getMembres') ;
     try {
 
         $responseFields = Array("PROJETS") ;
-        $query = Array( 'communeCode'=>"03400" ) ;
-        $membresCommune = $ad->getMembres($query,$responseFields) ; 
+        $query = Array( 'communeCode'=>"03100" ) ;
+        $membresCommune = $ApidaeMembres->getMembres($query,$responseFields) ; 
         
-        echo '<h2>Recherche des abonnés...</h2>' ;
+        echo '<h2>Recherche des membres concernés par la commune '.implode(',',$query).'...</h2>' ;
         echo '<pre>'.json_encode($query).'</pre>' ;
         $membresAbonnes = Array() ;
         foreach ( $membresCommune as $mc )
         {
-            echo '<h3>'.$mc['nom'].'</h3>' ;
+            echo '<h3>#'.$mc['id'].' '.$mc['nom'].'</h3>' ;
             if ( isset($mc['projets']) )
             {
+                echo '<ul>' ;
                 foreach ( $mc['projets'] as $p )
                 {
-                    echo '<h4>'.$p['id'].'/'.$p['nom'].'</h4>' ;
-                    if ( $p['id'] == 2792 ) // ApidaeEvent (multi-membres)
-                    {
-                        $membresAbonnes[] = $mc ;
-                    }
+                    echo '<li>' ;
+                        if ( $p['id'] == $projet_recherche ) echo '<strong>' ;
+                        echo '#'.$p['id'].' : '.$p['nom'] ;
+                        if ( $p['id'] == $projet_recherche ) { echo '</strong>' ; $membresAbonnes[] = $mc ; }
+                    echo '</li>' ;
                 }
+                echo '</ul>' ;
             }
         }
 
-        echo '<hr />' ;
-
-        echo '<h2>Membres abonnés ('.sizeof($membresAbonnes).')</h2>' ;
-
-        // On a les abonnés : s'il y en a plusieurs sur la commune, on doit chercher le plus petit.
-        foreach ( $membresAbonnes as $ma )
-        {
-            echo '<h3>'.$ma['nom'].'</h3>' ;
-            //echo json_encode($ma,JSON_PRETTY_PRINT) ;
-        }
-
-        //echo json_encode($membresCommune,JSON_PRETTY_PRINT) ;
-        
     }
     catch ( Exception $e ) {
         print_r($e) ;
+        die() ;
     }
+    ruShow('getMembres') ;
+
+    echo '<hr />' ;
+
+    echo '<h2>Membres abonnés au projet '.$projet_recherche.' sur la recherche '.json_encode($query).' ('.sizeof($membresAbonnes).')</h2>' ;
+
+    // On a les abonnés : s'il y en a plusieurs sur la commune, on doit chercher le plus petit.
+    foreach ( $membresAbonnes as $ma )
+    {
+        if ( in_array($ma['id'],\PierreGranger\ApidaeMembres::$idCRT) ) continue ; // On ignore volontairement Apidae Tourisme et Aura Tourisme
+        echo '<h3>'.$ma['nom'].'</h3>' ;
+        //echo json_encode($ma,JSON_PRETTY_PRINT) ;
+    }
+
+    //echo json_encode($membresCommune,JSON_PRETTY_PRINT) ;
+    
