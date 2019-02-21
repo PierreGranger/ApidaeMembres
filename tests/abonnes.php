@@ -8,8 +8,8 @@
 
 	if (php_sapi_name() !== "cli") echo '<pre>' ;
 
-    $_config['type_prod'] = 'preprod' ;
-    $ad = new \PierreGranger\ApidaeDroits($_config) ;
+    $configApidaeMembres['type_prod'] = 'preprod' ;
+    $ad = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
     
     try {
 

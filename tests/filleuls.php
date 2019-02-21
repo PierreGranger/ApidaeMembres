@@ -8,9 +8,9 @@
 
 	if (php_sapi_name() !== "cli") echo '<pre>' ;
 
-    $_config['type_prod'] = 'preprod' ;
-    $_config['debug'] = true ;
-    $ad = new \PierreGranger\ApidaeDroits($_config) ;
+    $configApidaeMembres['type_prod'] = 'preprod' ;
+    $configApidaeMembres['debug'] = true ;
+    $ad = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
     
     $idParrain = ( isset($utilisateurApidae) ) ? $utilisateurApidae['membre']['id'] : 1147 ; // Allier Tourisme
 
@@ -46,7 +46,7 @@
         }
     }
 
-    echo '<h1>Mes filleuls (#'.$idParrain.' / '.@$utilisateurApidae['membre']['nom'].')</h1>' ;
+    echo '<h1>Mes filleuls (#'.$idParrain.' / '.@$utilisateurApidae['membre']['nom'].') ('.sizeof($filleuls).' membres)</h1>' ;
 
     
     echo '<h2>Pour c/c par mail</h2>' ;

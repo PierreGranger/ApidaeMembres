@@ -1,8 +1,8 @@
 
 
-### Class: \PierreGranger\ApidaeDroits
+### Class: \PierreGranger\ApidaeMembres
 
-> Documentation pour la classe ApidaeDroits
+> Documentation pour la classe ApidaeMembres
 
 | Visibility | Function |
 |:-----------|:---------|

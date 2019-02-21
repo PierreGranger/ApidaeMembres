@@ -1,19 +1,19 @@
 <?php
 /**
- * Documentation pour le fichier ApidaeDroits.php
+ * Documentation pour le fichier ApidaeMembres.php
  * 
  * 
 */
 	nameSpace PierreGranger ;
 
 /**
- * Documentation pour la classe ApidaeDroits
+ * Documentation pour la classe ApidaeMembres
  * 
  * @author	Pierre Granger	<pierre@pierre-granger.fr>
  * 
  * 
  */
-class ApidaeDroits {
+class ApidaeMembres {
   
 	protected static $url_api = Array(
 		'preprod' => 'https://api.apidae-tourisme-recette.accelance.net/',
@@ -27,7 +27,7 @@ class ApidaeDroits {
 
 	protected $type_prod = 'prod' ;
 
-	protected $projet_consultation_projectId = null ;
+	protected $projet_consultation_projetId = null ;
 	protected $projet_consultation_apiKey = null ;
 
 	private $servicesMU = Array(
@@ -41,10 +41,10 @@ class ApidaeDroits {
 
 	public function __construct(array $params=null) {
 		
-		if ( isset($params['projet_consultation_projectId']) && preg_match('#^[0-9]+$#',$params['projet_consultation_projectId']) )
-			$this->projet_consultation_projectId = $params['projet_consultation_projectId'] ;
+		if ( isset($params['projet_consultation_projetId']) && preg_match('#^[0-9]+$#',$params['projet_consultation_projetId']) )
+			$this->projet_consultation_projetId = $params['projet_consultation_projetId'] ;
 		else
-			throw new \Exception('missing projet_consultation_projectId') ;
+			throw new \Exception('missing projet_consultation_projetId') ;
 		
 		if ( isset($params['projet_consultation_apiKey']) && preg_match('#^[a-zA-Z0-9]{1,20}$#',$params['projet_consultation_apiKey']) )
 			$this->projet_consultation_apiKey = $params['projet_consultation_apiKey'] ;
@@ -74,18 +74,14 @@ class ApidaeDroits {
 	 * 
 	 * @return	array	Tableau associatif des membres
 	 */
-	public function getMembres(array $query,string $responseFields=null)
+	public function getMembres(array $query,array $responseFields=null)
 	{
 		$params = Array(
-			'projectId'=>$this->projet_consultation_projectId,
+			'projetId'=>$this->projet_consultation_projetId,
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
-		if ( isset($responseFields) && $responseFields != null )
-		{
-			if ( is_array($responseFields) ) $params['responseFields'] = $responseFields ;
-			/*if ( is_string($responseFields) ) $params['responseFields'] = $responseFields ;
-			elseif ( is_array($responseFields) ) $params['responseFields'] = json_encode($responseFields) ;*/
-		}
+		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
+			$params['responseFields'] = $responseFields ;
 
 		return $this->apidaeCurlMU('membre/get-membres','POST',Array(
 			'params' => $params,
@@ -99,56 +95,88 @@ class ApidaeDroits {
 	 * @param int $idParrain	int	Identifiant du membre parrain
 	 * @return array Tableau associatif des membres filleuls
 	 */
-	public function getFilleuls(int $idParrain)
+	public function getFilleuls(int $idParrain,array $types=null)
 	{
-		$query = Array('idParrain'=>$idParrain) ;
+		if ( $types == null || ! is_array($types) ) $types = Array('Contributeur Généraliste') ;
+		$query = Array('idParrain'=>$idParrain,'types'=>$types) ;
 		$responseFields = Array("UTILISATEURS") ;
 		return $this->getMembres($query,$responseFields) ;
 	}
 
 	/**
-     * Description of a*a
-     * @param $arg
-     * @param array $arr
-     * @param int $bool
+     * Récupération d'un utilisateur par son identifiant, via le service get-by-id de l'API Membres/utilisateurs d'Apidae
+     * @param int	$id_user
+     * @return array 
      */
 	public function getUserById(int $id_user)
 	{
 		if ( ! preg_match('#^[0-9]+$#',$id_user) ) throw new \Exception(__LINE__." Invalid id_user for getUserById : ".$id_user) ;
 
 		$params = Array(
-			//'projectId'=>$this->projet_consultation_projectId,
-			'projetId'=>$this->projet_consultation_projectId,
+			//'projetId'=>$this->projet_consultation_projetId,
+			'projetId'=>$this->projet_consultation_projetId,
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 
 		return $this->apidaeCurlMU('utilisateur/get-by-id','GET',$params,$id_user) ;
 	}
+	public function getUser(int $id_user) { return $this->getUserById($id_user) ; }
+	public function getUtilisateur(int $id_user) { return $this->getUserById($id_user) ; }
 
+	/**
+     * Récupération d'un utilisateur par son adresse mail, via le service get-by-mail de l'API Membres/utilisateurs d'Apidae
+     * @param string	$mail_user
+     * @return array 
+     */
 	public function getUserByMail(string $mail_user)
 	{
 		if ( false === filter_var($mail_user, FILTER_VALIDATE_EMAIL) ) throw new \Exception(__LINE__." Invalid mail_user for getUserByMail : ".$mail_user) ;
 
 		$params = Array(
-			//'projectId'=>$this->projet_consultation_projectId,
-			'projetId'=>$this->projet_consultation_projectId,
+			//'projetId'=>$this->projet_consultation_projetId,
+			'projetId'=>$this->projet_consultation_projetId,
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 
 		return $this->apidaeCurlMU('utilisateur/get-by-mail','GET',$params,$mail_user) ;
 	}
 
+	/**
+     * Récupération de la liste des utilisateurs d'un membre par son identifiant, via le service get-by-membre de l'API Membres/utilisateurs d'Apidae
+     * @param int	$id_membre
+     * @return array 
+     */
 	public function getUsersByMember(int $id_membre)
 	{
-		if ( ! preg_match('#^[0-9]+$#',$id_membre) ) throw new \Exception(__LINE__." Invalid id_membre for getUsersByMember : ".$id_membre) ;
+		if ( ! preg_match('#^[0-9]+$#',$id_membre) ) throw new \Exception(__LINE__.' Invalid id_membre for '.__FUNCTION__.' : '.$id_membre) ;
 
 		$params = Array(
-			//'projectId'=>$this->projet_consultation_projectId,
-			'projetId'=>$this->projet_consultation_projectId,
+			//'projetId'=>$this->projet_consultation_projetId,
+			'projetId'=>$this->projet_consultation_projetId,
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 
 		return $this->apidaeCurlMU('utilisateur/get-by-membre','GET',$params,$id_membre) ;
+	}
+
+	/**
+	 *	Récupère un membre en fonction de son identifiant
+	 * 	@param int $id_membre
+	 * 	@return array
+	 */
+	public function getMembreById(int $id_membre,array $responseFields=null)
+	{
+		if ( ! preg_match('#^[0-9]+$#',$id_membre) ) throw new \Exception(__LINE__.' Invalid id_membre for '.__FUNCTION__.' : '.$id_membre) ;
+
+		$params = Array(
+			'projetId'=>$this->projet_consultation_projetId,
+			'apiKey'=>$this->projet_consultation_apiKey,
+			'id'=>$id_membre
+		) ;
+		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
+			$params['responseFields'] = $responseFields ;
+
+		return $this->apidaeCurlMU('membre/get-by-id','POST',$params) ;
 	}
 
 	/**
@@ -166,9 +194,10 @@ class ApidaeDroits {
 		if ( ! in_array($service,$this->servicesMU) )
 			throw new \Exception(__LINE__." Invalid function for apidaeCurl : ".$service) ;
 		
-		try {
+		//try {
 			$ch = curl_init();
 			
+			echo __LINE__ ;
 			curl_setopt($ch, CURLOPT_HTTPHEADER, Array('Content-Type: application/json')); // Erreur 415 sans cette ligne
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 			//curl_setopt($ch, CURLOPT_HEADER, 1) ;
@@ -188,6 +217,9 @@ class ApidaeDroits {
 				curl_setopt($ch,CURLOPT_POSTFIELDS, $postfields);
 			}
 			
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); 
+			curl_setopt($ch, CURLOPT_TIMEOUT, 5); //timeout in seconds
+
 			$response = curl_exec($ch);
 			$info = curl_getinfo($ch);
 			$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -231,11 +263,12 @@ class ApidaeDroits {
 			}
 
 			return $ret ;
-
+/*
 		} catch(\Exception $e) {
 			$msg = sprintf( 'Curl failed with error #%d: %s', $e->getCode(), $e->getMessage() ) ;
 			echo '<div class="alert alert-warning">'.$msg.'</div>' ;
 		}
+		*/
 	}
 
 }
