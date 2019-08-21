@@ -44,6 +44,10 @@ class ApidaeMembres {
 	private $curlConnectTimeout = 120 ;
 	private $curlTimeout = 120 ;
 
+	const EXCEPTION_NOT_IN_MEMBRES = 1 ;
+	const EXCEPTION_NOT_FILLEUL = 2 ;
+	const EXCEPTION_NO_PERMISSION = 3 ;
+
 	public function __construct(array $params=null) {
 		
 		if ( isset($params['projet_consultation_projetId']) && preg_match('#^[0-9]+$#',$params['projet_consultation_projetId']) )
@@ -73,7 +77,7 @@ class ApidaeMembres {
 	}
 
 	/**
-	 * Récupère un Array des membres autorisés à écrire sur une commune donnée
+	 * Récupère un Array des membres selon le $filter
 	 * 
 	 * @since	1.0
 	 * 
@@ -104,7 +108,7 @@ class ApidaeMembres {
 		$filter = Array('idParrain'=>$idParrain) ;
 		if ( $types == null || ! is_array($types) ) $types = Array('Contributeur Généraliste') ;
 		if ( is_array($types) && sizeof($types) > 0 ) $filter['types'] = $types ;
-		$responseFields = Array("UTILISATEURS") ;
+		$responseFields = json_encode(Array("UTILISATEURS")) ;
 		return $this->getMembres($filter,$responseFields) ;
 	}
 	/**
@@ -182,10 +186,11 @@ class ApidaeMembres {
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
-			$query['responseFields'] = $responseFields ;
+			$query['responseFields'] = json_encode($responseFields) ;
 
 		return $this->apidaeCurlMU('membre/get-by-id',$query,$id_membre) ;
 	}
+	public function getMembre(int $id_membre,array $responseFields=null) { return $this->getMembreById($id_membre,$responseFields) ; }
 
 	/**
 	 * Gestion des appels cURL aux API membres et utilisateurs d'Apidae
@@ -202,7 +207,6 @@ class ApidaeMembres {
 		elseif ( in_array($service,$this->servicesMU['POST']) ) $method = 'POST' ;
 		else throw new \Exception(__LINE__." Invalid function for apidaeCurl : ".$service) ;
 		
-		//try {
 			$ch = curl_init();
 			
 			//curl_setopt($ch, CURLOPT_HTTPHEADER, Array('Content-Type: application/json')); // Erreur 415 sans cette ligne
@@ -255,12 +259,10 @@ class ApidaeMembres {
 
 			if ( $httpcode != 200 ) 
 			{
-				echo '<pre>' ;
 				if ( $this->debug )
 					throw new \Exception($url_base.PHP_EOL.json_encode($params).PHP_EOL.$body, $httpcode);
 				else
 					throw new \Exception($url_base, $httpcode); // On affichage l'url_base et non $url parce qu'il peut contenir l'apiKey et projetId
-				echo '</pre>' ;
 			}
 			
 			$ret = json_decode($body,true) ;
@@ -275,12 +277,50 @@ class ApidaeMembres {
 			}
 
 			return $ret ;
-/*
-		} catch(\Exception $e) {
-			$msg = sprintf( 'Curl failed with error #%d: %s', $e->getCode(), $e->getMessage() ) ;
-			echo '<div class="alert alert-warning">'.$msg.'</div>' ;
+
+	}
+
+	/**
+	 * L'utilisateur a-t-il les droits demandés ?
+	 * @param	$utilisateurApidae	Array	Utilisateur Apidae défini par l'authentification SSO
+	 * @param	$droits	Array	Droits qu'on va rechercher sur cet utilisateur
+	 * 							$droits['membres']	Array	Le membre de l'utilisateur est-il dans la liste $droits['membres'] ? (liste d'identifiants numériques)
+	 * 							$droits['filleuls']	Integer	Le membre de l'utilisateur est-il filleur du membre $droits['filleuls'] ?
+	 * 							$droits['permissions']	Array	L'utilisateur a-t-il les permissions $droits['permissions'] ? (liste de string)
+	 * 
+	 */
+	public function droits($utilisateurApidae,$droits) {
+
+		$return = true ;
+
+		foreach ( $droits as $droit => $valeurs )
+		{
+			if ( $droit == 'membres' )
+			{
+				if ( ! in_array($utilisateurApidae['membre']['id'],$valeurs) )
+					return false ;
+			}
+
+			if ( $droit == 'filleuls' )
+			{
+				$filleuls = $this->getFilleuls($valeurs) ;
+				if ( ! in_array($utilisateurApidae['membre']['id'],$filleuls) )
+					return false ;
+			}
+
+			if ( $droit == 'permissions' )
+			{
+				$usr = $this->getUserById($utilisateurApidae['id']) ;
+				foreach ( $valeurs as $p )
+				{
+					if ( ! in_array($p,$valeurs) )
+						return false ;
+				}
+			}
 		}
-		*/
+
+		return $return ;
+
 	}
 
 }

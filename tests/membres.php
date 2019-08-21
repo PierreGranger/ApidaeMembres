@@ -19,6 +19,7 @@
     
         echo '<h2>getMembreById('.$id_membre.')</h2>'.PHP_EOL ;
         $membreById = $ApidaeMembres->getMembreById($id_membre,Array('PROJETS')) ;
+        echo '<pre>$ApidaeMembres->getMembreById('.$id_membre.',Array(PROJETS)) ;</pre>' ;
         echo '<pre data-type="json">'.json_encode($membreById).'</pre>'.PHP_EOL ;
     }
     catch ( Exception $e ) {

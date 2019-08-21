@@ -9,7 +9,7 @@
 
     $ApidaeMembres = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
     
-    $id_user = 14016 ;
+    $id_user = 16511 ;
     $mail_user = 'p.granger@allier-tourisme.net' ;
     $id_membre = 1147 ;
 
