@@ -108,7 +108,7 @@ class ApidaeMembres {
 		$filter = Array('idParrain'=>$idParrain) ;
 		if ( $types == null || ! is_array($types) ) $types = Array('Contributeur Généraliste') ;
 		if ( is_array($types) && sizeof($types) > 0 ) $filter['types'] = $types ;
-		$responseFields = json_encode(Array("UTILISATEURS")) ;
+		$responseFields = Array("UTILISATEURS") ;
 		return $this->getMembres($filter,$responseFields) ;
 	}
 	/**
@@ -186,7 +186,7 @@ class ApidaeMembres {
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
-			$query['responseFields'] = json_encode($responseFields) ;
+			$query['responseFields'] = $responseFields ;
 
 		return $this->apidaeCurlMU('membre/get-by-id',$query,$id_membre) ;
 	}
