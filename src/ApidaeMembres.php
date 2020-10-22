@@ -313,7 +313,7 @@ class ApidaeMembres {
 				$usr = $this->getUserById($utilisateurApidae['id']) ;
 				foreach ( $valeurs as $p )
 				{
-					if ( ! in_array($p,$valeurs) )
+					if ( ! in_array($p,$usr['permissions']) )
 						return false ;
 				}
 			}
