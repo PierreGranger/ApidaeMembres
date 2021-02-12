@@ -5,6 +5,7 @@
     require(realpath(dirname(__FILE__)).'/runtimes.inc.php') ;
 
     $configApidaeMembres['debug'] = true ;
+    $configApidaeMembres['timer'] = true ;
     $ApidaeMembres = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
 
     $projet_recherche = 2792 ; // ApidaeEvent (multi-membres)
@@ -13,7 +14,6 @@
     echo '<script src="./jquery.beautify-json.js"></script>'.PHP_EOL ;
     echo '<link rel="stylesheet" type="text/css" href="./beautify-json.css">'.PHP_EOL ;
     
-    ruStart('getMembres') ;
     try {
 
         $responseFields = Array("PROJETS") ;
@@ -47,7 +47,6 @@
         print_r($e) ;
         die() ;
     }
-    ruShow('getMembres') ;
 
     echo '<hr />' ;
     echo '<h2>Membres abonnés au projet '.$projet_recherche.' sur la recherche '.json_encode($query).' ('.sizeof($membresAbonnes).')</h2>' ;
@@ -55,9 +54,11 @@
     // On a les abonnés : s'il y en a plusieurs sur la commune, on doit chercher le plus petit.
     foreach ( $membresAbonnes as $ma )
     {
-        if ( in_array($ma['id'],\PierreGranger\ApidaeMembres::$idCRT) ) continue ; // On ignore volontairement Apidae Tourisme et Aura Tourisme
+        if ( in_array($ma['id'],\PierreGranger\ApidaeMembres::$idApidae) ) continue ; // On ignore volontairement Apidae Tourisme et Aura Tourisme
         echo '<h3>'.$ma['nom'].'</h3>' ;
         echo '<pre data-type="json">'.json_encode($ma).'</pre>'.PHP_EOL ;
     }
+
+    $ApidaeMembres->timer() ;
 
     ?><script>jQuery('pre[data-type="json"]').beautifyJSON();</script>

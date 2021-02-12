@@ -13,33 +13,15 @@
  * 
  * 
  */
-class ApidaeMembres {
-  
-	protected static $url_api = Array(
-		'preprod' => 'https://api.apidae-tourisme-recette.accelance.net/',
-		'prod' => 'https://api.apidae-tourisme.com/'
-	) ;
-
-	protected static $url_base = Array(
-		'preprod' => 'https://base.apidae-tourisme-recette.accelance.net/',
-		'prod' => 'https://base.apidae-tourisme.com/'
-	) ;
-
-	protected $type_prod = 'prod' ;
+class ApidaeMembres extends ApidaeCore {
 
 	protected $projet_consultation_projetId = null ;
 	protected $projet_consultation_apiKey = null ;
-
-	public static $idCRT = Array(1,1157) ; // Identifiants des membres Auvergne - Rhône-Alpes Tourisme et Apidae Tourisme
 
 	private $servicesMU = Array(
 		'GET' => Array('utilisateur/get-by-id','utilisateur/get-by-mail','utilisateur/get-by-membre','utilisateur/get-all-utilisateurs','membre/get-by-id'),
 		'POST' => Array('membre/get-membres')
 	) ;
-
-	protected $_config ;
-
-	private $debug = false ;
 
 	private $curlConnectTimeout = 120 ;
 	private $curlTimeout = 120 ;
@@ -50,6 +32,8 @@ class ApidaeMembres {
 
 	public function __construct(array $params=null) {
 		
+		parent::__construct($params) ;
+
 		if ( isset($params['projet_consultation_projetId']) && preg_match('#^[0-9]+$#',$params['projet_consultation_projetId']) )
 			$this->projet_consultation_projetId = $params['projet_consultation_projetId'] ;
 		else
@@ -60,20 +44,7 @@ class ApidaeMembres {
 		else
 			throw new \Exception('missing projet_consultation_apiKey') ;
 
-		if ( isset($params['type_prod']) && in_array($params['type_prod'],Array('prod','preprod')) ) $this->type_prod = $params['type_prod'] ;
 
-		if ( isset($params['debug']) ) $this->debug = $params['debug'] == true ;
-
-		$this->_config = $params ;
-
-	}
-
-	private function url_base() {
-		return self::$url_base[$this->type_prod] ;
-	}
-
-	private function url_api() {
-		return self::$url_api[$this->type_prod] ;
 	}
 
 	/**
@@ -185,8 +156,10 @@ class ApidaeMembres {
 			'projetId'=>$this->projet_consultation_projetId,
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
-		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
-			$query['responseFields'] = $responseFields ;
+		if ( isset($responseFields) && $responseFields != null )
+		{
+			$query['responseFields'] = is_array($responseFields) ? json_encode($responseFields) : $responseFields ;
+		}
 
 		return $this->apidaeCurlMU('membre/get-by-id',$query,$id_membre) ;
 	}
@@ -248,7 +221,7 @@ class ApidaeMembres {
 
 			$response = curl_exec($ch);
 			$info = curl_getinfo($ch);
-			$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			$httpcode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	
 
 			if (FALSE === $response) throw new \Exception(curl_error($ch), curl_errno($ch));
@@ -257,7 +230,12 @@ class ApidaeMembres {
 			//$body = substr($response, -$info['download_content_length']);
 			$body = $response ;
 
-			if ( $httpcode != 200 ) 
+			if ( $httpcode == 204 ) // No content
+			{
+				return false ;
+			}
+
+			if ( $httpcode != 200 )
 			{
 				if ( $this->debug )
 					throw new \Exception($url_base.PHP_EOL.json_encode($params).PHP_EOL.$body, $httpcode);

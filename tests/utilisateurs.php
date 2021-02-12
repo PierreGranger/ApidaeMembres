@@ -2,7 +2,6 @@
 
     require(realpath(dirname(__FILE__)).'/../vendor/autoload.php') ;
     require(realpath(dirname(__FILE__)).'/../config.inc.php') ;
-    require(realpath(dirname(__FILE__)).'/runtimes.inc.php') ;
 
     ini_set('display_errors',1) ;
     error_reporting(E_ALL) ;
@@ -19,32 +18,33 @@
     
     echo '<h1>tests getUser</h1>' ;
 
-    ruStart(__FILE__) ;
+    $ApidaeMembres->start(__FILE__) ;
     try {
     
-        ruStart('getUserById') ;
+        $ApidaeMembres->start('getUserById') ;
         echo '<h2>getUserById('.$id_user.')</h2>'.PHP_EOL ;
         $userById = $ApidaeMembres->getUserById($id_user) ;
         echo '<pre data-type="json">'.json_encode($userById).'</pre>'.PHP_EOL ;
-        ruShow('getUserById') ;
+        $ApidaeMembres->stop('getUserById') ;
 
-        ruStart('getUserByMail') ;
+        $ApidaeMembres->start('getUserByMail') ;
         echo '<h2>getUserByMail('.$mail_user.')</h2>'.PHP_EOL ;
         $userByMail = $ApidaeMembres->getUserByMail($mail_user) ;
         echo '<pre data-type="json">'.json_encode($userByMail).'</pre>'.PHP_EOL ;
-        ruShow('getUserByMail') ;
+        $ApidaeMembres->stop('getUserByMail') ;
 
-        ruStart('getUserByMember') ;
+        $ApidaeMembres->start('getUserByMember') ;
         echo '<h2>getUsersByMember('.$id_membre.')</h2>'.PHP_EOL ;
         $usersByMember = $ApidaeMembres->getUsersByMember($id_membre) ;
         echo '<pre data-type="json">'.json_encode($usersByMember).'</pre>'.PHP_EOL ;
-        ruShow('getUserByMember') ;
+        $ApidaeMembres->stop('getUserByMember') ;
     }
     catch ( Exception $e ) {
-        print_r($e) ;
-        die() ;
+        $ApidaeMembres->showException($e) ;
     }
-    ruShow(__FILE__) ;
+    $ApidaeMembres->stop(__FILE__) ;
+
+    $ApidaeMembres->timer() ;
 
 ?><script>jQuery('pre[data-type="json"]').beautifyJSON();</script>
     

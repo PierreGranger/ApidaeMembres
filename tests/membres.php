@@ -2,9 +2,11 @@
 
     require(realpath(dirname(__FILE__)).'/../vendor/autoload.php') ;
     require(realpath(dirname(__FILE__)).'/../config.inc.php') ;
-    require(realpath(dirname(__FILE__)).'/runtimes.inc.php') ;
     
-    $ApidaeMembres = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
+    $ApidaeMembres = new \PierreGranger\ApidaeMembres(array_merge(
+        $configApidaeMembres,
+        Array('debug'=>true,'timer'=>true)
+    )) ;
     
     $id_membre = 1147 ;
 
@@ -14,19 +16,21 @@
     
     echo '<h1>tests getMembre</h1>' ;
 
-    ruStart(__FILE__) ;
     try {
     
+        $ApidaeMembres->start('getMembreById') ;
         echo '<h2>getMembreById('.$id_membre.')</h2>'.PHP_EOL ;
         $membreById = $ApidaeMembres->getMembreById($id_membre,Array('PROJETS')) ;
         echo '<pre>$ApidaeMembres->getMembreById('.$id_membre.',Array(PROJETS)) ;</pre>' ;
         echo '<pre data-type="json">'.json_encode($membreById).'</pre>'.PHP_EOL ;
+        $ApidaeMembres->stop('getMembreById') ;
     }
     catch ( Exception $e ) {
         print_r($e) ;
         die() ;
     }
-    ruShow(__FILE__) ;
+
+    $ApidaeMembres->timer() ;
 
 ?><script>jQuery('pre[data-type="json"]').beautifyJSON();</script>
     

@@ -2,13 +2,15 @@
 
     require(realpath(dirname(__FILE__)).'/../vendor/autoload.php') ;
     require(realpath(dirname(__FILE__)).'/../config.inc.php') ;
-    require(realpath(dirname(__FILE__)).'/runtimes.inc.php') ;
 
-    $ApidaeMembres = new \PierreGranger\ApidaeMembres($configApidaeMembres) ;
+    $ApidaeMembres = new \PierreGranger\ApidaeMembres(array_merge(
+        $configApidaeMembres,
+        Array('debug'=>true,'timer'=>true)
+    )) ;
     
     $idParrain = ( isset($utilisateurApidae) ) ? $utilisateurApidae['membre']['id'] : 1147 ; // Allier Tourisme
 
-    ruStart('getFilleuls('.$idParrain.')') ;
+    $ApidaeMembres->start('getFilleuls('.$idParrain.')') ;
     try {
         $filleuls = $ApidaeMembres->getFilleuls($idParrain) ;
     }
@@ -16,7 +18,7 @@
         print_r($e) ;
         die() ;
     }
-    ruShow('getFilleuls('.$idParrain.')') ;
+    $ApidaeMembres->stop('getFilleuls('.$idParrain.')') ;
 
     $lignes = Array() ;
     $mailTo = Array() ;
