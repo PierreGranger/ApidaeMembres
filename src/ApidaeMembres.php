@@ -61,8 +61,8 @@ class ApidaeMembres extends ApidaeCore {
 			'apiKey'=>$this->projet_consultation_apiKey,
 			'filter'=>$filter
 		) ;
-		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
-			$query['responseFields'] = $responseFields ;
+		if ( isset($responseFields) && $responseFields != null )
+			$query['responseFields'] = is_array($responseFields) ? json_encode($responseFields) : $responseFields ;
 
 		return $this->apidaeCurlMU('membre/get-membres',$query) ;
 	}
@@ -75,11 +75,10 @@ class ApidaeMembres extends ApidaeCore {
 	 */
 	public function getFilleuls(int $idParrain,array $types=null)
 	{
-		
 		$filter = Array('idParrain'=>$idParrain) ;
 		if ( $types == null || ! is_array($types) ) $types = Array('Contributeur Généraliste') ;
 		if ( is_array($types) && sizeof($types) > 0 ) $filter['types'] = $types ;
-		$responseFields = Array("UTILISATEURS") ;
+		$responseFields = json_encode(Array("UTILISATEURS")) ;
 		return $this->getMembres($filter,$responseFields) ;
 	}
 	/**
@@ -157,9 +156,7 @@ class ApidaeMembres extends ApidaeCore {
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
 		if ( isset($responseFields) && $responseFields != null )
-		{
 			$query['responseFields'] = is_array($responseFields) ? json_encode($responseFields) : $responseFields ;
-		}
 
 		return $this->apidaeCurlMU('membre/get-by-id',$query,$id_membre) ;
 	}
