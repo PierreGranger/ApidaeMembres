@@ -63,7 +63,7 @@ class ApidaeMembres extends ApidaeCore {
 		) ;
 		if ( isset($responseFields) && $responseFields != null )
 			$query['responseFields'] = is_array($responseFields) ? json_encode($responseFields) : $responseFields ;
-
+		
 		return $this->apidaeCurlMU('membre/get-membres',$query) ;
 	}
 
@@ -155,8 +155,8 @@ class ApidaeMembres extends ApidaeCore {
 			'projetId'=>$this->projet_consultation_projetId,
 			'apiKey'=>$this->projet_consultation_apiKey
 		) ;
-		if ( isset($responseFields) && $responseFields != null )
-			$query['responseFields'] = is_array($responseFields) ? json_encode($responseFields) : $responseFields ;
+		if ( isset($responseFields) && $responseFields != null && is_array($responseFields) )
+			$query['responseFields'] = json_encode($responseFields) ;
 
 		return $this->apidaeCurlMU('membre/get-by-id',$query,$id_membre) ;
 	}
@@ -189,11 +189,35 @@ class ApidaeMembres extends ApidaeCore {
 			$url = $url_base ;
 			if ( $page !== null && preg_match('#^[a-zA-Z0-9\@\.-]+$#',$page) ) $url .= $page ;
 			
-			if ( $method == 'GET' ) $url .= '?'.http_build_query($params) ;
+			/**
+			 * 19/02/2021 Fun fact syntaxe responseFields :
+			 * Méthode en GET :
+			 * get-membres/?query={"projetId":X,"apiKey":"Y","filter":{"idProjet":Z},"responseFields":["PROJETS"]}
+			 * $params["responseFields"] doit être DEJA json_encode, sinon il faut l'encoder ici
+			 * Méthode en POST
+			 * get-by-id/1157?projetId=X&apiKey=Y&responseFields=["PROJETS"]
+			 * $params["responseFields"] ne doit PAS être json_encode
+			 * Sinon on se retrouve avec responseFields="[\"PROJETS\"]"
+			 */
+
+			if ( $method == 'GET' )
+			{
+				if ( isset($params['responseFields']) && is_array($params['responseFields']) )
+					$params['responseFields'] = json_encode($params['responseFields']) ;
+
+				$url .= '?'.http_build_query($params) ;
+			}
 			curl_setopt($ch,CURLOPT_URL, $url) ;
 			
 			if ( $method == 'POST' )
 			{
+				if ( isset($params['responseFields']) && ! is_array($params['responseFields']) )
+				{
+					$test = json_decode($params['responseFields'],true) ;
+					if ( json_last_error() == JSON_ERROR_NONE )
+						$params['responseFields'] = $test ;
+				}
+
 				curl_setopt($ch, CURLOPT_POST, 1) ;
 				$postfields = 'query='.json_encode($params) ;
 				curl_setopt($ch,CURLOPT_POSTFIELDS, $postfields);
