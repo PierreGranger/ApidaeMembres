@@ -20,28 +20,29 @@
 
     $ApidaeMembres->start(__FILE__) ;
     try {
-    
         $ApidaeMembres->start('getUserById') ;
         echo '<h2>getUserById('.$id_user.')</h2>'.PHP_EOL ;
         $userById = $ApidaeMembres->getUserById($id_user) ;
         echo '<pre data-type="json">'.json_encode($userById).'</pre>'.PHP_EOL ;
         $ApidaeMembres->stop('getUserById') ;
+    } catch ( Exception $e ) { echo $e ; }
 
+    try {
         $ApidaeMembres->start('getUserByMail') ;
         echo '<h2>getUserByMail('.$mail_user.')</h2>'.PHP_EOL ;
         $userByMail = $ApidaeMembres->getUserByMail($mail_user) ;
         echo '<pre data-type="json">'.json_encode($userByMail).'</pre>'.PHP_EOL ;
         $ApidaeMembres->stop('getUserByMail') ;
+    } catch ( Exception $e ) { echo $e ; }
 
+    try {
         $ApidaeMembres->start('getUserByMember') ;
         echo '<h2>getUsersByMember('.$id_membre.')</h2>'.PHP_EOL ;
         $usersByMember = $ApidaeMembres->getUsersByMember($id_membre) ;
         echo '<pre data-type="json">'.json_encode($usersByMember).'</pre>'.PHP_EOL ;
         $ApidaeMembres->stop('getUserByMember') ;
-    }
-    catch ( Exception $e ) {
-        $ApidaeMembres->showException($e) ;
-    }
+    } catch ( Exception $e ) { echo $e ; }
+
     $ApidaeMembres->stop(__FILE__) ;
 
     $ApidaeMembres->timer() ;

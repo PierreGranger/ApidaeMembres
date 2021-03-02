@@ -22,10 +22,7 @@ class ApidaeMembres extends ApidaeCore {
 		'GET' => Array('utilisateur/get-by-id','utilisateur/get-by-mail','utilisateur/get-by-membre','utilisateur/get-all-utilisateurs','membre/get-by-id'),
 		'POST' => Array('membre/get-membres')
 	) ;
-
-	private $curlConnectTimeout = 120 ;
-	private $curlTimeout = 120 ;
-
+	
 	const EXCEPTION_NOT_IN_MEMBRES = 1 ;
 	const EXCEPTION_NOT_FILLEUL = 2 ;
 	const EXCEPTION_NO_PERMISSION = 3 ;
@@ -176,106 +173,63 @@ class ApidaeMembres extends ApidaeCore {
 		if ( in_array($service,$this->servicesMU['GET']) ) $method = 'GET' ;
 		elseif ( in_array($service,$this->servicesMU['POST']) ) $method = 'POST' ;
 		else throw new \Exception(__LINE__." Invalid function for apidaeCurl : ".$service) ;
-		
-			$ch = curl_init();
-			
-			//curl_setopt($ch, CURLOPT_HTTPHEADER, Array('Content-Type: application/json')); // Erreur 415 sans cette ligne
-			//curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain')); 
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			//curl_setopt($ch, CURLOPT_HEADER, 1) ;
-			
-
-			$url_base = $this->url_api().'api/v002/'.$service.'/' ;
-			$url = $url_base ;
-			if ( $page !== null && preg_match('#^[a-zA-Z0-9\@\.-]+$#',$page) ) $url .= $page ;
-			
-			/**
-			 * 19/02/2021 Fun fact syntaxe responseFields :
-			 * Méthode en GET :
-			 * get-membres/?query={"projetId":X,"apiKey":"Y","filter":{"idProjet":Z},"responseFields":["PROJETS"]}
-			 * $params["responseFields"] doit être DEJA json_encode, sinon il faut l'encoder ici
-			 * Méthode en POST
-			 * get-by-id/1157?projetId=X&apiKey=Y&responseFields=["PROJETS"]
-			 * $params["responseFields"] ne doit PAS être json_encode
-			 * Sinon on se retrouve avec responseFields="[\"PROJETS\"]"
-			 */
-
-			if ( $method == 'GET' )
-			{
-				if ( isset($params['responseFields']) && is_array($params['responseFields']) )
-					$params['responseFields'] = json_encode($params['responseFields']) ;
-
-				$url .= '?'.http_build_query($params) ;
-			}
-			curl_setopt($ch,CURLOPT_URL, $url) ;
-			
-			if ( $method == 'POST' )
-			{
-				if ( isset($params['responseFields']) && ! is_array($params['responseFields']) )
-				{
-					$test = json_decode($params['responseFields'],true) ;
-					if ( json_last_error() == JSON_ERROR_NONE )
-						$params['responseFields'] = $test ;
-				}
-
-				curl_setopt($ch, CURLOPT_POST, 1) ;
-				$postfields = 'query='.json_encode($params) ;
-				curl_setopt($ch,CURLOPT_POSTFIELDS, $postfields);
-			}
-			
-			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->curlConnectTimeout); 
-			curl_setopt($ch, CURLOPT_TIMEOUT, $this->curlTimeout); //timeout in seconds
-
-			if ( $debug )
-			{
-				echo '<pre style="background:black;color:white;">' ;
-					echo $method . PHP_EOL ; 
-					if ( $method =='POST' )
-					{
-						echo $url.PHP_EOL ;
-						echo $postfields ;
-					}
-					else
-						echo $url ;
-				echo '</pre>' ;
-			}
-
-			$response = curl_exec($ch);
-			$info = curl_getinfo($ch);
-			$httpcode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	
+		$url_base = '/api/v002/'.$service.'/' ;
+		$url = $url_base ;
+		if ( $page !== null && preg_match('#^[a-zA-Z0-9\@\.-]+$#',$page) ) $url .= $page ;
+		
+		/**
+		 * 19/02/2021 Fun fact syntaxe responseFields :
+		 * Méthode en GET :
+		 * get-membres/?query={"projetId":X,"apiKey":"Y","filter":{"idProjet":Z},"responseFields":["PROJETS"]}
+		 * $params["responseFields"] doit être DEJA json_encode, sinon il faut l'encoder ici
+		 * Méthode en POST
+		 * get-by-id/1157?projetId=X&apiKey=Y&responseFields=["PROJETS"]
+		 * $params["responseFields"] ne doit PAS être json_encode
+		 * Sinon on se retrouve avec responseFields="[\"PROJETS\"]"
+		 */
 
-			if (FALSE === $response) throw new \Exception(curl_error($ch), curl_errno($ch));
+		// On ne demande pas forcément du json, parce que la réponse peut être une 404 (donc format incorrect)
+		//$request_params = Array('format' => 'json') ;
 
-			//$header = substr($response, 0, $info['header_size']);
-			//$body = substr($response, -$info['download_content_length']);
-			$body = $response ;
+		$request_params = Array() ;
 
-			if ( $httpcode == 204 ) // No content
+		if ( $method == 'GET' )
+		{
+			if ( isset($params['responseFields']) && is_array($params['responseFields']) )
+				$params['responseFields'] = json_encode($params['responseFields']) ;
+
+			$url .= '?'.http_build_query($params) ;
+		}
+		
+		if ( $method == 'POST' )
+		{
+			if ( isset($params['responseFields']) && ! is_array($params['responseFields']) )
 			{
-				return false ;
+				$test = json_decode($params['responseFields'],true) ;
+				if ( json_last_error() == JSON_ERROR_NONE )
+					$params['responseFields'] = $test ;
 			}
 
-			if ( $httpcode != 200 )
-			{
-				if ( $this->debug )
-					throw new \Exception($url_base.PHP_EOL.json_encode($params).PHP_EOL.$body, $httpcode);
-				else
-					throw new \Exception($url_base, $httpcode); // On affichage l'url_base et non $url parce qu'il peut contenir l'apiKey et projetId
-			}
-			
-			$ret = json_decode($body,true) ;
+			$request_params['POST'] = 1 ;
+			$request_params['POSTFIELDS'] = 'query='.json_encode($params) ;
+		}
+		
+		$result = $this->request($url,$request_params) ;
+		
+		if ( $result['code'] == 204 ) return false ;
 
-			$json_last_error = json_last_error() ;
-			if ( $json_last_error !== JSON_ERROR_NONE )
-			{
-				if ( $this->debug )
-					throw new \Exception('cURL Return is not JSON ['.$json_last_error.'] : '.$url_base.PHP_EOL.json_encode($params).PHP_EOL.$body);
-				else
-					throw new \Exception('cURL Return is not JSON');
-			}
-
-			return $ret ;
+		if ( $result['code'] != 200 )
+		{
+			throw new ApidaeException('incorrect http_code returned',ApidaeException::INVALID_HTTPCODE,Array(
+				'debug' => $this->debug,
+				'params' => $params,
+				'url' => $url,
+				'result' => $result
+			)) ;
+		}
+		
+		return $result['array'] ;
 
 	}
 
