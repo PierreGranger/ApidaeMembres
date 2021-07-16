@@ -18,8 +18,8 @@ try {
 
     $apidaeMembres->start('getMembres');
 
-    $filter = ['types' => ['Contributeur Généraliste']];
-    $responsefields = [];
+    $filter = [];
+    $responsefields = ['UTILISATEURS'];
 
     $result = $apidaeMembres->getMembres($filter, $responsefields);
     echo '<pre>$ApidaeMembres->getMembres(' . json_encode($filter) . ',' . json_encode($responsefields) . ') ;</pre>';

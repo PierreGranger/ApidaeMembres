@@ -35,6 +35,8 @@ class ApidaeMembres extends ApidaeCore
 
 		parent::__construct($params);
 
+		$this->timeout = 30;
+
 		if (isset($params['projet_consultation_projetId']) && preg_match('#^[0-9]+$#', $params['projet_consultation_projetId']))
 			$this->projet_consultation_projetId = $params['projet_consultation_projetId'];
 		else
@@ -166,6 +168,21 @@ class ApidaeMembres extends ApidaeCore
 	public function getMembre(int $id_membre, array $responseFields = null)
 	{
 		return $this->getMembreById($id_membre, $responseFields);
+	}
+
+	/**
+	 * Cet appel ne liste pas les utilisateurs enregistrés ou parrainés.
+	 */
+	public function getAllUtilisateurs()
+	{
+		$this->timeout = 600;
+		$query = [
+			'projetId' => $this->projet_consultation_projetId,
+			'apiKey' => $this->projet_consultation_apiKey
+		];
+		$ret = $this->apidaeCurlMU('utilisateur/get-all-utilisateurs', $query);
+		$this->timeout = 15;
+		return $ret;
 	}
 
 	/**
