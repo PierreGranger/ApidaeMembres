@@ -247,12 +247,13 @@ class ApidaeMembres extends ApidaeCore
 		if ($result['code'] == 204) return false;
 
 		if ($result['code'] != 200) {
-			throw new ApidaeException('incorrect http_code returned', ApidaeException::INVALID_HTTPCODE, array(
-				'debug' => $this->debug,
-				'params' => $params,
-				'url' => $url,
-				'result' => $result
-			));
+			$details = [];
+			if ($this->debug) {
+				$details['params'] = $params;
+				$details['url'] = $url;
+				$details['result'] = $result;
+			}
+			throw new ApidaeException($service . ' : incorrect http_code returned ' . $result['code'], ApidaeException::INVALID_HTTPCODE, $details);
 		}
 
 		return $result['array'];
