@@ -21,10 +21,10 @@ class ApidaeMembres extends ApidaeCore
 	protected $projet_consultation_projetId = null;
 	protected $projet_consultation_apiKey = null;
 
-	private $servicesMU = array(
-		'GET' => array('utilisateur/get-by-id', 'utilisateur/get-by-mail', 'utilisateur/get-by-membre', 'utilisateur/get-all-utilisateurs', 'membre/get-by-id'),
-		'POST' => array('membre/get-membres')
-	);
+	private $servicesMU = [
+		'GET' => ['utilisateur/get-by-id', 'utilisateur/get-by-mail', 'utilisateur/get-by-membre', 'utilisateur/get-all-utilisateurs', 'membre/get-by-id'],
+		'POST' => ['membre/get-membres']
+	];
 
 	const EXCEPTION_NOT_IN_MEMBRES = 1;
 	const EXCEPTION_NOT_FILLEUL = 2;
@@ -57,11 +57,11 @@ class ApidaeMembres extends ApidaeCore
 	 */
 	public function getMembres(array $filter, $responseFields = null)
 	{
-		$query = array(
+		$query = [
 			'projetId' => $this->projet_consultation_projetId,
 			'apiKey' => $this->projet_consultation_apiKey,
 			'filter' => $filter
-		);
+		];
 		if (isset($responseFields) && $responseFields != null)
 			$query['responseFields'] = is_array($responseFields) ? json_encode($responseFields) : $responseFields;
 
@@ -76,10 +76,10 @@ class ApidaeMembres extends ApidaeCore
 	 */
 	public function getFilleuls(int $idParrain, array $types = null)
 	{
-		$filter = array('idParrain' => $idParrain);
-		if ($types == null || !is_array($types)) $types = array('Contributeur Généraliste');
+		$filter = ['idParrain' => $idParrain];
+		if ($types == null || !is_array($types)) $types = ['Contributeur Généraliste'];
 		if (is_array($types) && sizeof($types) > 0) $filter['types'] = $types;
-		$responseFields = json_encode(array("UTILISATEURS"));
+		$responseFields = json_encode(["UTILISATEURS"]);
 		return $this->getMembres($filter, $responseFields);
 	}
 	/**
@@ -91,11 +91,10 @@ class ApidaeMembres extends ApidaeCore
 	{
 		if (!preg_match('#^[0-9]+$#', $id_user)) throw new \Exception(__LINE__ . " Invalid id_user for getUserById : " . $id_user);
 
-		$query = array(
-			//'projetId'=>$this->projet_consultation_projetId,
+		$query = [
 			'projetId' => $this->projet_consultation_projetId,
 			'apiKey' => $this->projet_consultation_apiKey
-		);
+		];
 
 		return $this->apidaeCurlMU('utilisateur/get-by-id', $query, $id_user);
 	}
@@ -120,11 +119,10 @@ class ApidaeMembres extends ApidaeCore
 	{
 		if (false === filter_var($mail_user, FILTER_VALIDATE_EMAIL)) throw new \Exception(__LINE__ . " Invalid mail_user for getUserByMail : " . $mail_user);
 
-		$params = array(
-			//'projetId'=>$this->projet_consultation_projetId,
+		$params = [
 			'projetId' => $this->projet_consultation_projetId,
 			'apiKey' => $this->projet_consultation_apiKey
-		);
+		];
 
 		return $this->apidaeCurlMU('utilisateur/get-by-mail', $params, $mail_user);
 	}
@@ -138,11 +136,10 @@ class ApidaeMembres extends ApidaeCore
 	{
 		if (!preg_match('#^[0-9]+$#', $id_membre)) throw new \Exception(__LINE__ . ' Invalid id_membre for ' . __FUNCTION__ . ' : ' . $id_membre);
 
-		$params = array(
-			//'projetId'=>$this->projet_consultation_projetId,
+		$params = [
 			'projetId' => $this->projet_consultation_projetId,
 			'apiKey' => $this->projet_consultation_apiKey
-		);
+		];
 
 		return $this->apidaeCurlMU('utilisateur/get-by-membre', $params, $id_membre);
 	}
@@ -156,10 +153,10 @@ class ApidaeMembres extends ApidaeCore
 	{
 		if (!preg_match('#^[0-9]+$#', $id_membre)) throw new \Exception(__LINE__ . ' Invalid id_membre for ' . __FUNCTION__ . ' : ' . $id_membre);
 
-		$query = array(
+		$query = [
 			'projetId' => $this->projet_consultation_projetId,
 			'apiKey' => $this->projet_consultation_apiKey
-		);
+		];
 		if (isset($responseFields) && $responseFields != null && is_array($responseFields))
 			$query['responseFields'] = json_encode($responseFields);
 
@@ -218,7 +215,7 @@ class ApidaeMembres extends ApidaeCore
 		// On ne demande pas forcément du json, parce que la réponse peut être une 404 (donc format incorrect)
 		//$request_params = Array('format' => 'json') ;
 
-		$request_params = array();
+		$request_params = [];
 
 		if ($method == 'GET') {
 			if (isset($params['responseFields']) && is_array($params['responseFields']))
@@ -253,10 +250,10 @@ class ApidaeMembres extends ApidaeCore
 				$details['url'] = $url;
 				$details['result'] = $result;
 			}
-			throw new ApidaeException($service . ' : incorrect http_code returned ' . $result['code'], ApidaeException::INVALID_HTTPCODE, $details);
+			throw new ApidaeException(__CLASS__ . ':' . $service . ' : incorrect http_code ' . $result['code'], ApidaeException::INVALID_HTTPCODE, $details);
 		}
 
-		return $result['array'];
+		return $result;
 	}
 
 	/**
