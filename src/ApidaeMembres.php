@@ -253,7 +253,7 @@ class ApidaeMembres extends ApidaeCore
 			throw new ApidaeException(__CLASS__ . ':' . $service . ' : incorrect http_code ' . $result['code'], ApidaeException::INVALID_HTTPCODE, $details);
 		}
 
-		return json_decode($result['body']);
+		return json_decode($result['body'], true);
 	}
 
 	/**
