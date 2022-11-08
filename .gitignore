@@ -4,3 +4,4 @@ composer.lock
 /.git/
 /build/
 /examples/_*
+/recette/
