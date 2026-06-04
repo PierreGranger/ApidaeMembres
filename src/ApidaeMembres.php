@@ -30,7 +30,7 @@ class ApidaeMembres extends ApidaeCore
 	const EXCEPTION_NOT_FILLEUL = 2;
 	const EXCEPTION_NO_PERMISSION = 3;
 
-	public function __construct(array $params = null)
+	public function __construct(?array $params = null)
 	{
 
 		parent::__construct($params);
@@ -74,7 +74,7 @@ class ApidaeMembres extends ApidaeCore
 	 * @param int $idParrain	int	Identifiant du membre parrain
 	 * @return array Tableau associatif des membres filleuls
 	 */
-	public function getFilleuls(int $idParrain, array $types = null)
+	public function getFilleuls(int $idParrain, ?array $types = null)
 	{
 		$filter = ['idParrain' => $idParrain];
 		if ($types == null || !is_array($types)) $types = ['Contributeur Généraliste'];
@@ -149,7 +149,7 @@ class ApidaeMembres extends ApidaeCore
 	 * 	@param int $id_membre
 	 * 	@return array
 	 */
-	public function getMembreById(int $id_membre, array $responseFields = null)
+	public function getMembreById(int $id_membre, ?array $responseFields = null)
 	{
 		if (!preg_match('#^[0-9]+$#', $id_membre)) throw new \Exception(__LINE__ . ' Invalid id_membre for ' . __FUNCTION__ . ' : ' . $id_membre);
 
@@ -162,7 +162,7 @@ class ApidaeMembres extends ApidaeCore
 
 		return $this->apidaeCurlMU('membre/get-by-id', $query, $id_membre);
 	}
-	public function getMembre(int $id_membre, array $responseFields = null)
+	public function getMembre(int $id_membre, ?array $responseFields = null)
 	{
 		return $this->getMembreById($id_membre, $responseFields);
 	}
@@ -188,7 +188,7 @@ class ApidaeMembres extends ApidaeCore
 	 * @param	string	$service	Service (chemin relatif)
 	 * @param	array	$params	Liste de paramètres qui seront envoyées en cURL : en POST elles seront converties via json_encode, en GET elles seront converties via http_build_query.
 	 */
-	private function apidaeCurlMU(string $service, array $params = null, string $page = null)
+	private function apidaeCurlMU(string $service, ?array $params = null, ?string $page = null)
 	{
 		$debug = $this->debug;
 
