@@ -1,0 +1,15 @@
+name: apidae-membres
+
+services:
+
+  php:
+    container_name: apidae-membres-php
+    build:
+      context: ..
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    working_dir: /var/www/html
+    ports:
+      - "${PORT:-80}:80"
+    volumes:
+      - ../:/var/www/html

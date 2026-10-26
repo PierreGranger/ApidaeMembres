@@ -1,7 +1,9 @@
 config.inc.php
 composer.lock
+.phpunit.cache/
 /vendor/
 /.git/
 /build/
 /examples/_*
 /recette/
+docker/.env
